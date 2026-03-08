@@ -1,0 +1,5 @@
+{
+  "name": "MC & CHA Financial Dashboard",
+  "description": "Herramienta de gestión financiera en tiempo real para Mesón MC y Turismo Activo CHA, con seguimiento de EBITDA y gastos operativos.",
+  "requestFramePermissions": []
+}
