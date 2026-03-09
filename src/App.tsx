@@ -22,7 +22,9 @@ import {
   CloudOff,
   LogIn,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  Menu,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -118,6 +120,8 @@ export default function App() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('mc_cha_financial_data', JSON.stringify(data));
@@ -243,44 +247,83 @@ export default function App() {
   }, [data.lastBackupDate]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
+    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900 overflow-x-hidden">
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-700 flex items-center justify-between px-4 z-50 shadow-md">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">MC</div>
+          <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">CHA</div>
+          <span className="text-white font-bold text-sm ml-1">Gestión</span>
+        </div>
+        <button 
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="p-2 text-white hover:bg-slate-600 rounded-lg transition-colors"
+        >
+          {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* Sidebar Backdrop */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="lg:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-800 border-r border-slate-900 flex flex-col sticky top-0 h-screen text-white">
-        <div className="p-6 border-b border-slate-700/50">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-orange-900/20">MC</div>
-            <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-green-900/20">CHA</div>
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-slate-700 border-r border-slate-800 flex flex-col transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="p-6 border-b border-slate-600/50 flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-orange-900/20">MC</div>
+              <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-green-900/20">CHA</div>
+            </div>
+            <h1 className="text-lg font-bold tracking-tight text-white">Gestión Real-Time</h1>
           </div>
-          <h1 className="text-lg font-bold tracking-tight text-white">Gestión Real-Time</h1>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="lg:hidden p-2 text-slate-400 hover:text-white"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
           <button 
-            onClick={() => setActiveTab('dashboard')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'dashboard' ? 'bg-white text-slate-900 shadow-lg shadow-black/10' : 'text-slate-200 hover:bg-slate-700'}`}
+            onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'dashboard' ? 'bg-white text-slate-900 shadow-lg shadow-black/10' : 'text-slate-200 hover:bg-slate-600'}`}
           >
             <LayoutDashboard size={20} />
             <span className="font-medium">Cuadro de Mando</span>
           </button>
           <button 
-            onClick={() => setActiveTab('entry')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'entry' ? 'bg-white text-slate-900 shadow-lg shadow-black/10' : 'text-slate-200 hover:bg-slate-700'}`}
+            onClick={() => { setActiveTab('entry'); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'entry' ? 'bg-white text-slate-900 shadow-lg shadow-black/10' : 'text-slate-200 hover:bg-slate-600'}`}
           >
             <PlusCircle size={20} />
             <span className="font-medium">Entrada de Datos</span>
           </button>
           <button 
-            onClick={() => setActiveTab('history')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'history' ? 'bg-white text-slate-900 shadow-lg shadow-black/10' : 'text-slate-200 hover:bg-slate-700'}`}
+            onClick={() => { setActiveTab('history'); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'history' ? 'bg-white text-slate-900 shadow-lg shadow-black/10' : 'text-slate-200 hover:bg-slate-600'}`}
           >
             <History size={20} />
             <span className="font-medium">Historial</span>
           </button>
         </nav>
 
-        <div className="p-4 border-t border-slate-700/50">
+        <div className="p-4 border-t border-slate-600/50">
           <div className="flex items-center gap-3 px-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${isSyncing ? 'bg-slate-700 border-slate-600' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${isSyncing ? 'bg-slate-600 border-slate-500' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
               {isSyncing ? <Loader2 size={16} className="animate-spin text-slate-400" /> : <Cloud size={16} className="text-emerald-400" />}
             </div>
             <div className="flex-1 min-w-0">
@@ -292,8 +335,8 @@ export default function App() {
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-700/50">
-          <div className="bg-slate-900/30 p-4 rounded-xl">
+        <div className="p-4 border-t border-slate-600/50">
+          <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-600/30">
             <p className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-2">Mes de Análisis</p>
             <input 
               type="month" 
@@ -304,20 +347,26 @@ export default function App() {
           </div>
         </div>
 
-        <div className="p-4 text-center border-t border-slate-700/50">
+        <div className="p-4 text-center border-t border-slate-600/50">
           <a 
             href="https://smileconsultores.com" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-[10px] text-slate-400 hover:text-white transition-colors font-medium tracking-wide"
+            className="flex items-center justify-center gap-2 text-[10px] text-slate-300 hover:text-white transition-colors font-medium tracking-wide"
           >
+            <img 
+              src="https://www.smileconsultores.com/gallery_gen/26aadff78e30f843ca5b6d8211c014d2_163x160.9625.png" 
+              alt="smileconsultores logo" 
+              className="h-6 w-auto transition-all brightness-0 invert opacity-80 hover:opacity-100"
+              referrerPolicy="no-referrer"
+            />
             Hand made by smileconsultores
           </a>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-4 lg:p-8 overflow-y-auto mt-16 lg:mt-0">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
             <motion.div 
