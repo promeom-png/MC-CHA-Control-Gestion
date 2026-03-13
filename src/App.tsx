@@ -606,12 +606,49 @@ function DataEntryForm({ business, color, onAddExpense, onAddSale }: any) {
 
     setIsScanning(true);
     try {
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
-        reader.readAsDataURL(file);
-      });
-      const base64Data = await base64Promise;
+      // 1. Resize and compress image to handle large camera photos
+      const compressImage = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target?.result as string;
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const MAX_WIDTH = 1200;
+              const MAX_HEIGHT = 1200;
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height) {
+                if (width > MAX_WIDTH) {
+                  height *= MAX_WIDTH / width;
+                  width = MAX_WIDTH;
+                }
+              } else {
+                if (height > MAX_HEIGHT) {
+                  width *= MAX_HEIGHT / height;
+                  height = MAX_HEIGHT;
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx?.drawImage(img, 0, 0, width, height);
+              
+              // Get base64 string without the prefix
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+              resolve(dataUrl.split(',')[1]);
+            };
+            img.onerror = reject;
+          };
+          reader.onerror = reject;
+        });
+      };
+
+      const base64Data = await compressImage(file);
 
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
       const response = await ai.models.generateContent({
@@ -619,7 +656,7 @@ function DataEntryForm({ business, color, onAddExpense, onAddSale }: any) {
         contents: [
           {
             parts: [
-              { inlineData: { data: base64Data, mimeType: file.type } },
+              { inlineData: { data: base64Data, mimeType: "image/jpeg" } },
               { text: "Extract data from this Spanish invoice/receipt. Taxable base (base imponible) as 'amount', supplier name as 'supplier', and date in YYYY-MM-DD format as 'date'. Return ONLY a JSON object. If a value is missing, use null." }
             ]
           }
@@ -643,10 +680,9 @@ function DataEntryForm({ business, color, onAddExpense, onAddSale }: any) {
       if (result.date) setDate(result.date);
     } catch (error) {
       console.error("OCR Error:", error);
-      alert("Error al escanear la factura. Por favor, inténtalo de nuevo.");
+      alert("Error al escanear la factura. Asegúrate de tener conexión y que la foto sea clara.");
     } finally {
       setIsScanning(false);
-      // Reset input
       e.target.value = '';
     }
   };
@@ -719,6 +755,7 @@ function DataEntryForm({ business, color, onAddExpense, onAddSale }: any) {
               <input 
                 type="file" 
                 accept="image/*" 
+                capture="environment"
                 className="hidden" 
                 onChange={handleOCR} 
                 disabled={isScanning}
